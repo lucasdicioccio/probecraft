@@ -1,17 +1,9 @@
-begin
-        require 'capby'
-        require 'racket'
-        require 'probecraft'
-        require 'probecraft/probes/traceroute'
-rescue LoadError
-        require 'rubygems'
-        require 'capby'
-        require 'racket'
-        require 'probecraft'
-        require 'probecraft/probes/traceroute'
-end
+require 'capby'
+require 'racket'
+require 'probecraft'
+require 'probecraft/probecraft'
+require 'probecraft/probes/traceroute'
 
-$SAFE = 2
 
 if Capby::Device.all.empty?
         puts "No interface found, maybe you should run that as root"
@@ -24,8 +16,10 @@ if ARGV.empty?
         exit
 end
 
+include Probecraft
+
 devname = ARGV.shift
-@probecraft = Probecraft.new devname
+@probecraft = ::Probecraft::Probecraft.new devname
 
 pkt = LostPacket.new(ARGV.first, 1, {:timeout => 1})
 @probecraft.perform pkt
