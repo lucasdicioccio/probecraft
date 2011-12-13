@@ -47,7 +47,7 @@ module Probecraft
         raise ArgumentError.new("no such device #{devname}") unless @device
         @capture = Capby::LiveCapture.new @device
         @injector = Capby::LiveCapture.new @device
-        @injector.buflen = 3000 #not used to sniff
+        @injector.bufsize = 3000 #not used to sniff
       end
       @link_layer = @@link_layers[@capture.datalink]
       raise RuntimeError.new("Don't know how to decapsulate #{@capture.datalink} link layer") unless @link_layer
@@ -156,14 +156,14 @@ module Probecraft
     # TODO: allow accurate timeinterval in sending
     def send(raws=[])
       raws = [raws].flatten #can send one or many packets
-      raws.each do |pkt|
-        pkt = Capby::Packet.new(pkt.to_s) unless pkt.is_a? Capby::Packet
-        pkt.send_on @injector
-      end
+      pkts = raws.map { |pkt| Capby::Packet.new(pkt.to_s) unless pkt.is_a? Capby::Packet }
+      @injector.send_packets! pkts
     end
 
     def perform(measurements=[])
       ProbeCollection.new([measurements].flatten).run_on self
     end
   end
+  PC = Probecraft
 end
+
