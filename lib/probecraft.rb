@@ -18,7 +18,7 @@
 #
 
 module  Probecraft
-  VERSION = '1.0.0'
+  VERSION = '1.0.1'
   ABOUT = "Probecraft is a library to easily craft and match packets"
   AUTHORS = ["Lucas DiCioccio"]
   LICENCE = ["GPLv3"]
