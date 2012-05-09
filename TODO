@@ -1,7 +1,8 @@
-* dependencies in Rakefile
+* gem dependencies
 * utils with:
   - dnet
   - ifconfig 
   - arp
   - route
   - iwconfig
+* ipv6

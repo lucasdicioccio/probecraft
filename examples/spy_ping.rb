@@ -1,23 +1,13 @@
 # This example shows how to passively snoop for certain kinds of packets and select only the good ones.
 #
-begin
-        require 'capby'
-        require 'racket'
-        require 'probecraft'
-        require 'probecraft/matcher'
-        require 'probecraft/protocols/ethernet'
-        require 'probecraft/protocols/ip'
-        require 'probecraft/protocols/icmp'
-rescue LoadError
-        require 'rubygems'
-        require 'capby'
-        require 'racket'
-        require 'probecraft'
-        require 'probecraft/matcher'
-        require 'probecraft/protocols/ethernet'
-        require 'probecraft/protocols/ip'
-        require 'probecraft/protocols/icmp'
-end
+require 'capby'
+require 'racket'
+require 'probecraft'
+require 'probecraft/probecraft'
+require 'probecraft/matcher'
+require 'probecraft/protocols/ethernet'
+require 'probecraft/protocols/ip'
+require 'probecraft/protocols/icmp'
 
 if Capby::Device.all.empty?
         puts "No interface found, maybe you should run that as root"
@@ -30,8 +20,10 @@ if ARGV.empty?
         exit
 end
 
+include Probecraft
+
 devname = ARGV.first
-b = Probecraft.new devname
+b = Probecraft::Probecraft.new devname
 
 
 def build_matcher_for_id(i=nil, j=nil)

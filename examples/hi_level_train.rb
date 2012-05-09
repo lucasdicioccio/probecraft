@@ -3,10 +3,9 @@ require 'rubygems'
 require 'capby'
 require 'racket'
 require 'probecraft'
+require 'probecraft/probecraft'
 require 'probecraft/probes/train'
 
-
-$SAFE = 2
 
 if Capby::Device.all.empty?
         puts "No interface found, maybe you should run that as root"
@@ -19,8 +18,10 @@ if ARGV.empty?
         exit
 end
 
+include Probecraft
+
 devname = ARGV.shift
-@probecraft = Probecraft.new devname
+@probecraft = Probecraft::Probecraft.new devname
 
 @probecraft.iface_peer_hw_addr = "00:16:3e:ff:ff:ff"
 

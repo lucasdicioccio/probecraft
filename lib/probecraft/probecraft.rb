@@ -200,4 +200,6 @@ module Probecraft
       ProbeCollection.new([measurements].flatten).run_on self
     end
   end
+  PC = Probecraft
 end
+

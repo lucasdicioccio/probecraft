@@ -1,6 +1,6 @@
 require 'find'
 require 'rubygems'
-require 'lib/probecraft'
+require './lib/probecraft'
 
 module Project
   EXCLUDED_PATTERNS = [/\/\.git\//, /\.swp$/, /\.bak$/]
