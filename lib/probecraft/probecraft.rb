@@ -47,7 +47,8 @@ module Probecraft
         raise ArgumentError.new("no such device #{devname}") unless @device
         @capture = Capby::LiveCapture.new @device
         @injector = Capby::LiveCapture.new @device
-        @injector.buflen = 3000 #not used to sniff
+        @injector.bufsize = 0 #not used to sniff
+        @injector.snaplen = 0 #not used to sniff
       end
       @link_layer = @@link_layers[@capture.datalink]
       raise RuntimeError.new("Don't know how to decapsulate #{@capture.datalink} link layer") unless @link_layer
@@ -98,24 +99,53 @@ module Probecraft
     # the TimeoutError is not handled in this method, thus take care of it by yourself
     # if no block given, returns an array of the sniffed packets, else, nil is returned
     # we do so to avoid infinite loops to need unbounded amount of memory
-    def sniff(cnt = 0, timeout=0)
-      a = nil
-      a = [] unless block_given?
+    def sniff(cnt = 0, timeout=0, params={})
+      ret = nil
       Timeout.timeout(timeout) do 
-        @capture.each(cnt) do |pkt|
-          break unless pkt
-          ll = @link_layer.new(pkt.data)
-          ll.pkt_timestamp = pkt.timestamp
-          if block_given?
-            ll.decode!
-            yield ll
-          else
-            a << ll
+        if block_given?
+          sniff_and_yield(cnt, params) do |pkt|
+            yield pkt
           end
+        else
+          unless cnt > 0
+            raise ArgumentError, "must provide a block if no pkt limit" 
+          end
+          ret = sniff_only(cnt)
         end
       end
-      a.each{|ll| ll.decode!} if a
-      a
+      ret
+    end
+
+    def sniff_and_yield(cnt, params)
+      @capture.each(cnt) do |raw_pkt|
+        break unless raw_pkt
+        if params[:dont_decode]
+          yield raw_pkt
+        else
+          pkt = @link_layer.new(raw_pkt.data)
+          pkt.pkt_timestamp = raw_pkt.timestamp
+          pkt.decode!
+          yield pkt
+        end
+      end
+    end
+
+    def sniff_only(cnt, params)
+      raws = []
+      @capture.each(cnt) do |raw_pkt|
+        break unless raw_pkt
+        raws << raw_pkt
+      end
+      if params[:dont_decode]
+        raws
+      else
+        raws.map do |raw_pkt| 
+          pkt = @link_layer.new(raw_pkt.data)
+          pkt.pkt_timestamp = raw_pkt.timestamp
+          pkt.decode!
+          pkt
+        end
+      end
     end
 
     # timeout is per sniffed pkt (i.e. total timeout = cnt*timeout)
@@ -153,13 +183,17 @@ module Probecraft
     # sends a set of packets in a raw, these packets can be either raw strings, either Capby::Packet,
     # Racket's Packet is not supported (thus we *force* you to encode/transform it to string before)
     # indeed, it's faster if no string processing has to be done
-    # TODO: allow accurate timeinterval in sending
-    def send(raws=[])
-      raws = [raws].flatten #can send one or many packets
-      raws.each do |pkt|
-        pkt = Capby::Packet.new(pkt.to_s) unless pkt.is_a? Capby::Packet
-        pkt.send_on @injector
+    def send(ary=[])
+      ary = [ary].flatten #can send one or many packets
+      capby_pkts = ary.map do |pkt|
+        case pkt
+        when Capby::Packet
+          pkt
+        else
+          Capby::Packet.new(pkt.to_s) 
+        end
       end
+      @injector.send_packets!(capby_pkts)
     end
 
     def perform(measurements=[])
