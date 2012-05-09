@@ -50,47 +50,48 @@ module Probecraft
 
     define_opt(68, :TS, 'timestamp',
                [:ptr, 'c'],
-               [:oflw_flgs, 'c'],
+               [:oflw_flags, 'c'],
                [:addr_tst, '?'])
 
     class TS
-      attr_accessor :tsonly, :tsandaddr, :tsprespec, :oflw
+      attr_accessor :tsonly, :tsandaddr, :tsprespec, :oflw_flags, :ptr
       attr_reader :timestamps
 
       def initialize(*params, &blk)
         @timestamps = []
-        @tsonly = false
-        @tsandaddr = false
-        @tsprespec = false
-        @oflw = 0
+        @tsonly     = false
+        @tsandaddr  = false
+        @tsprespec  = false
+        @ptr        = 5
+        @oflw_flags  = 0
         super
       end
 
       def oflw
-        @oflw || ((@oflw_flgs & 0xf0) >> 4)
+        @oflw || ((@oflw_flags & 0xf0) >> 4)
       end
 
-      def flgs
-        @flgs || (@oflw_flgs & 0x0f)
+      def flags
+        @flags || (@oflw_flags & 0x0f)
       end
 
       def tsonly?
-        flgs == 0x00
+        flags == 0x00
       end
 
       def tsandaddr?
-        flgs == 0x01
+        flags == 0x01
       end
 
       def tsprespec?
-        flgs == 0x03
+        flags == 0x03
       end
 
-      def inspect_oflw_flgs
+      def inspect_oflw_flags
         str =  "| overflow: #{oflw}\n"
         str << "| flags: "
         str << [:tsonly, :tsandaddr, :tsprespec].map{|s| send("#{s}?") ? "(#{s})": ''}.join(' ')
-        str << "\n"
+        str << " (#{flags})\n"
       end
 
       def decode_addr_tst
@@ -143,7 +144,7 @@ module Probecraft
       end
 
       def encode_tsonly
-        @timestamps.inject(''){|str, tst| str + tst.pack('N')}
+        @timestamps.pack('N'*@timestamps.size)
       end
 
       def encode_tsandaddr
