@@ -57,7 +57,7 @@ module Probecraft
     def ip_layer_for(params)
       pkt = @probecraft.link_layer_pkt do |ll|
         ll.payload = IP.new do |ip|
-          ip.src = @probecraft.iface_addr
+          ip.src = @probecraft.iface_addr || params[:source]
           ip.dst = params[:target]
           ip.ttl = params[:ttl]
           ip.dont_fragment!
