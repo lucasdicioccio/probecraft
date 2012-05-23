@@ -55,7 +55,7 @@ module Probecraft
         end
 
         def new_for_trailer(trailer)
-          klass = kinds[trailer[0]]
+          klass = kinds[trailer.unpack('C').first]
           if klass
             klass.new(trailer)
           else
