@@ -180,6 +180,38 @@ module Probecraft
       h
     end
 
+    # sniff packets for timeout seconds
+    def multimatch(cnt=1, timeout=0, matchers=[], duplicate=false)
+      ret = {:status => :ok}
+      matchers.each{|m| ret[m] = []}
+      matched = 0
+      begin
+        lbd = if duplicate
+                proc do |pkt| 
+                  ary = matchers.select {|m| m.match?(pkt)}
+                  ary.each{|f| ret[f] << pkt}
+                  matched += 1 if ary.any?
+                  throw :done if matched == cnt
+                end
+              else
+                proc do |pkt|
+                  f = matchers.find {|m| m.match?(pkt)}
+                  if f
+                    ret[f] << pkt 
+                    matched += 1
+                    throw :done if matched == cnt
+                  end
+                end
+              end
+        catch :done do
+          sniff(0, timeout, &lbd)
+        end
+      rescue TimeoutError
+        ret[:status] = :timeout
+      end
+      ret
+    end
+
     # sends a set of packets in a raw, these packets can be either raw strings, either Capby::Packet,
     # Racket's Packet is not supported (thus we *force* you to encode/transform it to string before)
     # indeed, it's faster if no string processing has to be done
